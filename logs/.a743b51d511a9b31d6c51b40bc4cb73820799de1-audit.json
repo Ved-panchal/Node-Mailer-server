@@ -1,0 +1,30 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\RPA\\Marketing\\Node-Mail_Server\\logs\\.a743b51d511a9b31d6c51b40bc4cb73820799de1-audit.json",
+    "files": [
+        {
+            "date": 1733807008833,
+            "name": "D:\\RPA\\Marketing\\Node-Mail_Server\\logs\\error-2024-12-10.log",
+            "hash": "7dba256247df84537a42f9d3a33eb7036c2ce7c1f807e74b0688aa5802df0b5f"
+        },
+        {
+            "date": 1733891622706,
+            "name": "D:\\RPA\\Marketing\\Node-Mail_Server\\logs\\error-2024-12-11.log",
+            "hash": "313d999b2d1eef28741ed988e1056800ff7a60abbafa76a7d758b41ee10e5fa8"
+        },
+        {
+            "date": 1733985470920,
+            "name": "D:\\RPA\\Marketing\\Node-Mail_Server\\logs\\error-2024-12-12.log",
+            "hash": "588f2caa3f7ed0306be69149626caf6a75d1c4ae887520a4de9dac46173b8300"
+        },
+        {
+            "date": 1734068228334,
+            "name": "D:\\RPA\\Marketing\\Node-Mail_Server\\logs\\error-2024-12-13.log",
+            "hash": "6d191813315d143bf62442a0162467629c2cb5166be70d011d4c1ae7ead62e13"
+        }
+    ],
+    "hashType": "sha256"
+}
