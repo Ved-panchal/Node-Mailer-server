@@ -1,48 +1,60 @@
+/**
+* Purpose: Logger configuration file for handling application-wide logging
+* Input: Uses environment variables and system paths for configuration
+* Output: Configured logger instance with multiple transports and error handling
+*/
+
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
 import fs from 'fs';
 
-// Utility function to ensure directory exists
+/**
+* Purpose: Ensures that the logging directory exists, creating it if necessary
+* Input: Directory path as string
+* Output: Creates directory if it doesn't exist or throws error on failure
+*/
 const ensureDirectoryExists = (dirPath) => {
-  try {
-    // Check if directory exists, if not create it
-    if (!fs.existsSync(dirPath)) {
-      // recursive: true ensures parent directories are created if they don't exist
-      fs.mkdirSync(dirPath, { recursive: true });
-      console.log(`Created directory: ${dirPath}`);
-    }
-  } catch (error) {
-    console.error(`Error creating directory ${dirPath}:`, error);
-    
-    // Fallback error handling
-    try {
-      // Attempt to create directory with fs.promises if sync method fails
-      fs.promises.mkdir(dirPath, { recursive: true });
-    } catch (fallbackError) {
-      console.error(`Fallback directory creation failed: ${fallbackError}`);
-      
-      // If both methods fail, throw an error
-      throw new Error(`Cannot create log directory: ${dirPath}`);
-    }
-  }
+ try {
+   if (!fs.existsSync(dirPath)) {
+     fs.mkdirSync(dirPath, { recursive: true });
+     console.log(`Created directory: ${dirPath}`);
+   }
+ } catch (error) {
+   console.error(`Error creating directory ${dirPath}:`, error);
+   
+   try {
+     fs.promises.mkdir(dirPath, { recursive: true });
+   } catch (fallbackError) {
+     console.error(`Fallback directory creation failed: ${fallbackError}`);
+     throw new Error(`Cannot create log directory: ${dirPath}`);
+   }
+ }
 };
 
-// Determine log directory path
+// Define log directory path
 const logDir = path.join(process.cwd(), 'logs');
 
-
-// Ensure log directory exists before creating logger
+// Create log directory
 ensureDirectoryExists(logDir);
 
-// Rest of the logger configuration remains the same as in the previous example
+/**
+* Purpose: Defines the format for JSON log files with timestamps and error stacks
+* Input: None - uses winston's built-in formatters
+* Output: Combined winston format for file logging
+*/
 const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.splat(),
-  winston.format.json()
+ winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+ winston.format.errors({ stack: true }),
+ winston.format.splat(),
+ winston.format.json()
 );
 
+/**
+* Purpose: Defines the format for console output with colors and custom formatting
+* Input: None - uses winston's built-in formatters
+* Output: Combined winston format for console logging
+*/
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.printf(({ timestamp, level, message, stack, ...metadata }) => {
@@ -60,6 +72,11 @@ const consoleFormat = winston.format.combine(
   })
 );
 
+/**
+* Purpose: Creates and configures the main logger instance with multiple transports
+* Input: Environment variables for log level configuration
+* Output: Configured winston logger instance
+*/
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
@@ -105,17 +122,33 @@ const logger = winston.createLogger({
   ]
 });
 
+/**
+* Purpose: Adds stream capability for integration with other logging systems
+* Input: Message to be logged
+* Output: Logs message at info level after trimming
+*/
 logger.stream = {
   write: function(message) {
     logger.info(message.trim());
   }
-};
-
-logger.setLevels = (levels) => {
+ };
+ 
+ /**
+ * Purpose: Allows dynamic setting of log levels
+ * Input: Object containing custom log levels
+ * Output: Updates logger with new log levels
+ */
+ logger.setLevels = (levels) => {
   winston.addColors(levels);
   logger.levels = levels;
-};
+ };
+ 
 
+/**
+* Purpose: Provides contextual logging capability
+* Input: Log level, message, and optional context object
+* Output: Logs message with context at specified level
+*/
 logger.contextLog = (level, message, context = {}) => {
   logger.log({
     level,

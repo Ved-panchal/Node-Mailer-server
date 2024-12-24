@@ -2,6 +2,11 @@ import { sequelize } from "../db/db.js";
 import { sendBulkMails,sendPersonalMail } from "./mailController.js";
 import logger from "../Logger/Logger.js";
 
+/**
+ * Purpose: Custom error class for handling database operation failures
+ * Input: Error message and original error object
+ * Output: Extended Error instance with custom properties
+ */
 class DatabaseError extends Error {
   constructor(message, originalError) {
     super(message);
@@ -10,6 +15,11 @@ class DatabaseError extends Error {
   }
 }
 
+/**
+ * Purpose: Executes a SELECT query on the database with error handling and logging
+ * Input: SQL query string and error context description for logging
+ * Output: Query results as array of objects or throws DatabaseError on failure
+ */
 const SelectQuery = async (query, errorContext = "Generic Query") => {
   try {
     return await sequelize.query(query, {
@@ -27,6 +37,11 @@ const SelectQuery = async (query, errorContext = "Generic Query") => {
   }
 };
 
+/**
+ * Purpose: Replaces placeholder keywords in text with actual values from record
+ * Input: Text containing keywords and record object with replacement values
+ * Output: Processed text with all keywords replaced with corresponding values
+ */
 const replaceKeywords = (text, record) => {
   try {
     const replacements = {
@@ -53,6 +68,11 @@ const replaceKeywords = (text, record) => {
   }
 };
 
+/**
+ * Purpose: Main controller function that processes campaigns and sends bulk emails
+ * Input: HTTP request and response objects containing campaign processing parameters
+ * Output: JSON response with success status, message, and email count or error details
+ */
 export const extractDataAndSendMail = async (req, res) => {
   try {
     let campaignData, contentData, salesPersonData;
@@ -161,7 +181,7 @@ export const extractDataAndSendMail = async (req, res) => {
             await sequelize.query(
               `Update Schedule_Campaign Set Status=1, Total_Sent_Mails=${Data.length} where ID=${campaign.ID}`
             );
-            
+
               await sendPersonalMail(campaign.CampaignID, campaign.ContentID, Data.length);
 
             return res.json({
