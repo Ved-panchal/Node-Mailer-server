@@ -6,6 +6,7 @@
 
 import express from "express"
 import { extractDataAndSendMail } from "./Controllers/extractDataController.js"
+import { sendPersonalMailTest } from "./Controllers/test.js"
 
 /**
 * Purpose: Initialize Express application and configure port
@@ -25,5 +26,6 @@ app.get('/', (req, res) => {
 })
 
 app.post('/extract-Data-send-Mail',extractDataAndSendMail)
+app.post('/test-mail',sendPersonalMailTest)
 
 export default app;

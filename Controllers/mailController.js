@@ -26,7 +26,7 @@ class EmailSendingError extends Error {
 export const sendBulkMails = async (emails) => {
   const sentEmails = [];
   const failedEmails = [];
-  const chunkSize = 150;
+  const chunkSize = 50;
 
   try {
     if (!emails || emails.length === 0) {
@@ -40,7 +40,7 @@ export const sendBulkMails = async (emails) => {
         await MailService.sendMultiple(chunk);
         sentEmails.push(...chunk);
         logger.info(`Successfully sent chunk of ${chunk.length} emails`);
-        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay between chunks
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
       
       logger.info(`Successfully sent ${emails.length} emails`);
@@ -73,15 +73,18 @@ export const sendBulkMails = async (emails) => {
  * Input: campaignId (string), ContentId (string), MailCount (number)
  * Output: Object containing success status, message, and error details if any
  */
-export const sendPersonalMail = async (campaignId, ContentId, MailCount) => {
+export const sendPersonalMail = async (campaignId, ContentId, MailCount, SalesPersonMail) => {
+  // MailService.setApiKey(process.env.SENDGRID_API_KEY);
   try {
-    const PersonalEmail = [{
-      to: [process.env.NOTIFICATION_TO_EMAIL1, process.env.NOTIFICATION_TO_EMAIL2, process.env.NOTIFICATION_TO_EMAIL3],
+    const PersonalEmail = {
+      to: [SalesPersonMail, process.env.NOTIFICATION_TO_EMAIL1, process.env.NOTIFICATION_TO_EMAIL2, process.env.NOTIFICATION_TO_EMAIL3],
       cc: [
         process.env.NOTIFICATION_CC_EMAIL1,
         process.env.NOTIFICATION_CC_EMAIL2,
+        "dishalunagariya2910@gmail.com",
+        "vedpanchal99@gmail.com"
       ],
-      from: process.env.NOTIFICATION_FROM_EMAIL,
+      from: SalesPersonMail,
       subject: "Mailer Bot - Info Mail",
       html: `
         Hello Team,
@@ -97,8 +100,8 @@ export const sendPersonalMail = async (campaignId, ContentId, MailCount) => {
         Thanks & regards,
         Team RPA
       `
-    }];
-
+    };
+    // console.log("PersonalEmail",PersonalEmail)
     try {
       await MailService.send(PersonalEmail);
       logger.info(`Personal notification email sent for campaign ${campaignId}`);

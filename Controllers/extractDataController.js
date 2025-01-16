@@ -2,6 +2,15 @@ import { sequelize } from "../db/db.js";
 import { sendBulkMails,sendPersonalMail } from "./mailController.js";
 import logger from "../Logger/Logger.js";
 
+
+class EmailSendingError extends Error {
+  constructor(message, originalError) {
+    super(message);
+    this.name = "EmailSendingError";
+    this.originalError = originalError;
+  }
+}
+
 /**
  * Purpose: Custom error class for handling database operation failures
  * Input: Error message and original error object
@@ -90,15 +99,19 @@ export const extractDataAndSendMail = async (req, res) => {
     }
 
     const Data = [];
+    let Success = false;
 
     for (const campaign of campaignDetails) {
       try {
-        const campaignStartDate = new Date(
-          `${campaign.StartDate} ${campaign.StartTime}`
-        );
+        const startDate = campaign.StartDate.split('-'); // Split by '-'
+        const formattedStartDate = `${startDate[2]}-${startDate[1]}-${startDate[0]}`; // Reformat to YYYY-MM-DD
 
+        const campaignStartDate = new Date(`${formattedStartDate}T${campaign.StartTime}:00`);
         const currentDateTime = new Date();
         currentDateTime.setHours(currentDateTime.getHours() + 1);
+
+        console.log("Campaign Start Date:", campaignStartDate.toISOString());
+        console.log("Current Date Time:", currentDateTime.toISOString());
 
         if (campaignStartDate < currentDateTime) {
           campaignData = await SelectQuery(
@@ -133,6 +146,7 @@ export const extractDataAndSendMail = async (req, res) => {
               const processedSubject = replaceKeywords(Subject, record);
               const processedBody = replaceKeywords(Body, record);
               let UnsubsLink = "";
+              // let buffer = Buffer.alloc(0)
 
               encodedEmail = Buffer.from(record.EmailAddress).toString("base64");
 
@@ -145,14 +159,14 @@ export const extractDataAndSendMail = async (req, res) => {
                 <strong>Disclaimer:</strong> As a CANSPAM and GDPR compliant organization, we would like to explain why you have received this email. We believe that ${record.Company} has a legitimate interest in the White Label services that our domain is offering. Our research has identified your email address as the appropriate contact for the same.
                 This email was sent to ${record.EmailAddress}.
                 If you don't want to hear from us again, please click on <u><a href="${UnsubsLink}" style="color:blue;">Unsubscribe</a></u>.`;
-              // for(var i=0;i<100;i++){
-                Data.push({
-                  to: record.EmailAddress,
-                  from: EmailID,
-                  subject: processedSubject,
-                  html: emailTemplate,
-                });
-              // }
+                // for(var i=0;i<80;i++){
+                  Data.push({
+                    to: record.EmailAddress,
+                    from: EmailID,
+                    subject: processedSubject,
+                    html: emailTemplate,
+                  });
+                // }
             } catch (recordError) {
               logger.error("Error processing individual record", {
                 recordId: record.EmailAddress,
@@ -182,31 +196,38 @@ export const extractDataAndSendMail = async (req, res) => {
               `Update Schedule_Campaign Set Status=1, Total_Sent_Mails=${Data.length} where ID=${campaign.ID}`
             );
 
-              await sendPersonalMail(campaign.CampaignID, campaign.ContentID, Data.length);
+            const personalRes = await sendPersonalMail(campaign.CampaignID, campaign.ContentID, Data.length,salesPersonData[0].EmailID);
 
-            return res.json({
-              success: true,
-              message: "Emails sent successfully",
-              count: Data.length
-            });
+            if(personalRes.success){
+              console.log("personal Mail Sended Succesfully")
+            }
+
+            // return res.json({
+            //   success: true,
+            //   message: "Emails sent successfully",
+            //   count: Data.length
+            // });
+            Success = true;
           } catch (sendError) {
             logger.error("Error in email sending or database update", {
               error: sendError.message,
               stack: sendError.stack,
             });
-            return res.status(500).json({
-              success: false,
-              message: "Failed to send emails or update database",
-              error: sendError.message,
-            });
+            Success = false;
+            // return res.status(500).json({
+            //   success: false,
+            //   message: "Failed to send emails or update database",
+            //   error: sendError.message,
+            // });
           }
         } else {
           logger.info("No emails to send for this campaign");
-          return res.json({
-            success: true,
-            message: "No emails to send",
-            count: 0,
-          });
+          // return res.json({
+          //   success: true,
+          //   message: "No emails to send",
+          //   count: 0,
+          // });
+          Success = false;
         }
       } catch (campaignError) {
         logger.error("Error processing campaign", {
@@ -218,11 +239,21 @@ export const extractDataAndSendMail = async (req, res) => {
       }
     }
 
-    return res.json({
-      success: true,
-      message: "No campaigns processed",
-      count: 0,
-    });
+    if(Success) {
+      return res.json({
+          success: true,
+          message: "Emails sent successfully",
+          count: Data.length
+        });
+    } else {
+      return res.json({
+        success: true,
+        message: "No campaigns processed",
+        count: 0,
+      });
+    }
+
+    
   } catch (error) {
     logger.error("Unexpected error in extractData", {
       error: error.message,
