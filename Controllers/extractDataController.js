@@ -146,9 +146,8 @@ export const extractDataAndSendMail = async (req, res) => {
               const processedSubject = replaceKeywords(Subject, record);
               const processedBody = replaceKeywords(Body, record);
               let UnsubsLink = "";
-              // let buffer = Buffer.alloc(0)
-
-              encodedEmail = Buffer.from(record.EmailAddress).toString("base64");
+              
+              encodedEmail = base64.encode(record.EmailAddress.trim())
 
               UnsubsLink = campaign.CampaignID.includes("SUC")
                 ? `https://www.silvertouchtech.co.uk/mailer-unsubscribe/?cemail=${encodedEmail}`

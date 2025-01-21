@@ -1,6 +1,7 @@
 import MailService from "@sendgrid/mail";
 import logger from "../Logger/Logger.js";
 import dotenv from "dotenv";
+import sequelize from "../db/db.js";
 
 dotenv.config();
 MailService.setApiKey(process.env.SENDGRID_API_KEY);
@@ -38,6 +39,23 @@ export const sendBulkMails = async (emails) => {
       for (let i = 0; i < emails.length; i += chunkSize) {
         const chunk = emails.slice(i, i + chunkSize);
         await MailService.sendMultiple(chunk);
+        const emailAddresses = chunk.map(email => `'${email.to}'`).join(',');
+        console.log("Updating 50 Mail ID's Status")
+          await sequelize.query(`
+            UPDATE Campaign_Data 
+            SET 
+              Content_ID='${campaign.ContentID}', 
+              Sales_Person_Name='${salesPersonData[0].Sales_PersonName}',
+              Record_DateTime=getdate(),
+              Record_Status=1
+            WHERE 
+              Campaign_FileName='${campaign.CampaignID}' 
+              AND EmailAddress IN (${emailAddresses})
+              AND Record_Status=0 
+              AND Unsubscribe=0 
+              AND WrongID=0
+          `);
+        console.log("Updation of 50 Mail ID's Status completed successfully.");
         sentEmails.push(...chunk);
         logger.info(`Successfully sent chunk of ${chunk.length} emails`);
         await new Promise(resolve => setTimeout(resolve, 2000));

@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
+    "base-64": "^1.0.0",
     "dotenv": "^16.4.6",
     "express": "^4.21.1",
     "nodemon": "^3.1.7",
